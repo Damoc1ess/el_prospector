@@ -56,8 +56,8 @@
 - [x] Creer src/exporter.py
 - [x] Creer src/prospector.py
 - [x] Integrer tous modules
-- [ ] Test complet 10 restaurants
-- [ ] Commit CLI
+- [x] Test complet 10 restaurants
+- [x] Commit CLI
 
 ### Phase 5 : Finalisation (Tours 21-25)
 - [ ] Gestion erreurs robuste
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 7
-**Derniere action :** Intégrer tous modules - Import et compatibilité corrigés, test CLI réussi
-**Prochaine action :** Test complet 10 restaurants (validation complète du système)
+**Tour :** 8
+**Derniere action :** Test complet 10 restaurants réussi - 7/10 sites scrapés, numéros extraits, commit CLI
+**Prochaine action :** Gestion erreurs robuste (amélioration stabilité système)
 
 ---
 

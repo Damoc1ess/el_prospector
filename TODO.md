@@ -50,7 +50,7 @@
 - [x] Implementer detection reservation
 - [x] Implementer extraction email
 - [x] Tester sur 3 sites reels
-- [ ] Commit scraper
+- [x] Commit scraper
 
 ### Phase 4 : CLI & Export (Tours 15-20)
 - [ ] Creer src/exporter.py
@@ -71,8 +71,8 @@
 ## Etat Actuel
 
 **Tour :** 5
-**Derniere action :** Testé scraper sur 3 sites réels - SUCCÈS (2/3 sites OK)
-**Prochaine action :** Commit scraper
+**Derniere action :** Commit scraper - Phase 3 terminée avec succès
+**Prochaine action :** Créer src/exporter.py (Phase 4)
 
 ---
 

@@ -53,7 +53,7 @@
 - [x] Commit scraper
 
 ### Phase 4 : CLI & Export (Tours 15-20)
-- [ ] Creer src/exporter.py
+- [x] Creer src/exporter.py
 - [ ] Creer src/prospector.py
 - [ ] Integrer tous modules
 - [ ] Test complet 10 restaurants
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 5
-**Derniere action :** Commit scraper - Phase 3 terminée avec succès
-**Prochaine action :** Créer src/exporter.py (Phase 4)
+**Tour :** 6
+**Derniere action :** Créer src/exporter.py - Export CSV/JSON implémenté avec succès
+**Prochaine action :** Créer src/prospector.py (CLI principale)
 
 ---
 

@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(python *)",
+      "Bash(pytest *)",
+      "Read",
+      "Write",
+      "Edit"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(curl * | bash)",
+      "Bash(wget * | bash)"
+    ]
+  },
+  "model": "claude-sonnet-4-20250514",
+  "preferences": {
+    "autoCommit": true,
+    "commitPrefix": "[Ralph]",
+    "maxTurns": 200,
+    "checkpointInterval": 10
+  },
+  "ralph": {
+    "enabled": true,
+    "hardStopFile": "TODO.md",
+    "hardStopPattern": "\\[x\\] DONE",
+    "maxCost": 50.00,
+    "warningCost": 25.00
+  }
+}

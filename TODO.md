@@ -1,6 +1,6 @@
 # TODO.md - Prospection Hotels & Restaurants
 
-## Status: EN COURS
+## Status: ✅ TERMINE
 
 ---
 
@@ -108,4 +108,4 @@ GOOGLE_MAPS_API_KEY dans .env
 
 ## HARD STOP TRIGGER
 
-- [ ] DONE - Projet termine
+- [x] DONE - Projet termine

@@ -54,8 +54,8 @@
 
 ### Phase 4 : CLI & Export (Tours 15-20)
 - [x] Creer src/exporter.py
-- [ ] Creer src/prospector.py
-- [ ] Integrer tous modules
+- [x] Creer src/prospector.py
+- [x] Integrer tous modules
 - [ ] Test complet 10 restaurants
 - [ ] Commit CLI
 
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 6
-**Derniere action :** Créer src/exporter.py - Export CSV/JSON implémenté avec succès
-**Prochaine action :** Créer src/prospector.py (CLI principale)
+**Tour :** 7
+**Derniere action :** Intégrer tous modules - Import et compatibilité corrigés, test CLI réussi
+**Prochaine action :** Test complet 10 restaurants (validation complète du système)
 
 ---
 

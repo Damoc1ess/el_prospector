@@ -32,10 +32,10 @@
 
 ## Plan d Execution
 
-### Phase 1 : Setup (Tours 1-3)
-- [ ] Creer src/google_places.py
-- [ ] Tester connexion API Google
-- [ ] Commit setup
+### Phase 1 : Setup (Tours 1-3) ✓
+- [x] Creer src/google_places.py
+- [x] Tester connexion API Google
+- [x] Commit setup
 
 ### Phase 2 : Google API (Tours 4-7)
 - [ ] Implementer Text Search
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 0
-**Derniere action :** Initialisation projet
-**Prochaine action :** Creer google_places.py
+**Tour :** 1
+**Derniere action :** Setup Google Places client terminé
+**Prochaine action :** Implementer Text Search API
 
 ---
 

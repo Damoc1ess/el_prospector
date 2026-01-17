@@ -15,7 +15,7 @@ load_dotenv()
 class GooglePlacesClient:
     """Client for Google Places API Text Search and Place Details."""
 
-    BASE_URL = "https://maps.googleapis.com/maps/api/place"
+    BASE_URL = "https://places.googleapis.com/v1"
 
     def __init__(self):
         """Initialize client with API key from environment."""
@@ -36,52 +36,51 @@ class GooglePlacesClient:
             List of place dictionaries with basic info
         """
         if place_type == "all":
-            query = f"hotels and restaurants in {city}"
+            text_query = f"hotels and restaurants in {city}"
         else:
-            query = f"{place_type}s in {city}"
+            text_query = f"{place_type}s in {city}"
 
-        url = f"{self.BASE_URL}/textsearch/json"
-        params = {
-            'query': query,
-            'key': self.api_key,
-            'language': 'fr'
+        url = f"{self.BASE_URL}/places:searchText"
+
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': self.api_key,
+            'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.id,places.rating,places.userRatingCount'
         }
 
-        places = []
-        next_page_token = None
+        payload = {
+            'textQuery': text_query,
+            'languageCode': 'fr',
+            'maxResultCount': min(limit, 20)  # Max 20 per request
+        }
 
-        while len(places) < limit:
-            if next_page_token:
-                params['pagetoken'] = next_page_token
-                # Wait 2 seconds before next page request (Google requirement)
-                time.sleep(2)
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=10)
+            response.raise_for_status()
+            data = response.json()
 
-            try:
-                response = requests.get(url, params=params, timeout=10)
-                response.raise_for_status()
-                data = response.json()
+            places = data.get('places', [])
 
-                if data['status'] != 'OK':
-                    print(f"Google API error: {data.get('status')} - {data.get('error_message', '')}")
-                    break
+            # Transform to compatible format
+            transformed_places = []
+            for place in places:
+                transformed_place = {
+                    'place_id': place.get('id'),
+                    'name': place.get('displayName', {}).get('text', 'Unknown'),
+                    'formatted_address': place.get('formattedAddress', 'Unknown'),
+                    'rating': place.get('rating'),
+                    'user_ratings_total': place.get('userRatingCount', 0)
+                }
+                transformed_places.append(transformed_place)
 
-                # Add places from this page
-                page_places = data.get('results', [])
-                places.extend(page_places[:limit - len(places)])
+            # Sleep to respect API rate limits
+            time.sleep(1)
 
-                # Check if we have more pages and need more results
-                next_page_token = data.get('next_page_token')
-                if not next_page_token or len(places) >= limit:
-                    break
+            return transformed_places
 
-            except requests.RequestException as e:
-                print(f"Error searching places: {e}")
-                break
-
-        # Sleep to respect API rate limits
-        time.sleep(1)
-
-        return places[:limit]
+        except requests.RequestException as e:
+            print(f"Error searching places: {e}")
+            return []
 
     def get_place_details(self, place_id: str) -> Optional[Dict]:
         """
@@ -93,26 +92,32 @@ class GooglePlacesClient:
         Returns:
             Dictionary with detailed place information or None if error
         """
-        url = f"{self.BASE_URL}/details/json"
-        params = {
-            'place_id': place_id,
-            'fields': 'name,formatted_address,formatted_phone_number,website,rating,user_ratings_total',
-            'key': self.api_key,
-            'language': 'fr'
+        url = f"{self.BASE_URL}/places/{place_id}"
+
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': self.api_key,
+            'X-Goog-FieldMask': 'displayName,formattedAddress,nationalPhoneNumber,websiteUri,rating,userRatingCount'
         }
 
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             data = response.json()
 
-            if data['status'] == 'OK':
-                # Sleep to respect API rate limits
-                time.sleep(1)
-                return data['result']
-            else:
-                print(f"Place details error: {data.get('status')} - {data.get('error_message', '')}")
-                return None
+            # Transform to compatible format
+            result = {
+                'name': data.get('displayName', {}).get('text', 'Unknown'),
+                'formatted_address': data.get('formattedAddress', 'Unknown'),
+                'formatted_phone_number': data.get('nationalPhoneNumber'),
+                'website': data.get('websiteUri'),
+                'rating': data.get('rating'),
+                'user_ratings_total': data.get('userRatingCount', 0)
+            }
+
+            # Sleep to respect API rate limits
+            time.sleep(1)
+            return result
 
         except requests.RequestException as e:
             print(f"Error getting place details: {e}")
@@ -126,15 +131,31 @@ class GooglePlacesClient:
             True if connection successful, False otherwise
         """
         try:
-            # Simple test search
-            test_places = self.search_places("Paris", "restaurant", 1)
-            if test_places:
-                print(f"✓ Google Places API connection successful")
-                print(f"  Test result: {test_places[0]['name']}")
-                return True
-            else:
-                print("✗ Google Places API returned no results")
+            # Test 1: Search places
+            print("Testing Text Search API...")
+            test_places = self.search_places("Paris", "restaurant", 2)
+            if not test_places:
+                print("✗ Google Places Text Search returned no results")
                 return False
+
+            print(f"✓ Text Search successful - Found {len(test_places)} places")
+            print(f"  Example: {test_places[0]['name']} - {test_places[0]['formatted_address']}")
+
+            # Test 2: Place Details
+            print("\nTesting Place Details API...")
+            place_id = test_places[0]['place_id']
+            details = self.get_place_details(place_id)
+            if not details:
+                print("✗ Place Details API failed")
+                return False
+
+            print("✓ Place Details successful")
+            print(f"  Name: {details.get('name')}")
+            print(f"  Phone: {details.get('formatted_phone_number', 'N/A')}")
+            print(f"  Website: {details.get('website', 'N/A')}")
+            print(f"  Rating: {details.get('rating', 'N/A')}")
+
+            return True
 
         except Exception as e:
             print(f"✗ Google Places API connection failed: {e}")

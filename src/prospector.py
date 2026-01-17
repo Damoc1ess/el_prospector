@@ -136,8 +136,8 @@ def main():
             try:
                 contact_info = scraper.scrape_contact_info(data['website'])
 
-                if contact_info['phone']:
-                    data['reservation_phone'] = contact_info['phone']
+                if contact_info['reservation_phone']:
+                    data['reservation_phone'] = contact_info['reservation_phone']
                     print("✅ Téléphone trouvé")
                 else:
                     print("❌ Pas de téléphone")

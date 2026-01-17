@@ -98,9 +98,9 @@ class ContactScraper:
         if tel_links:
             for link in tel_links:
                 phone = link['href'].replace('tel:', '').strip()
-                formatted_phone = self.phone_extractor.format_phone(phone)
-                if formatted_phone:
-                    return formatted_phone
+                cleaned_phone = self.phone_extractor.clean_phone(phone)
+                if cleaned_phone:
+                    return cleaned_phone
 
         # 2. Chercher les numéros près des mots-clés de réservation
         reservation_phone = self._find_phone_near_keywords(html_text)

@@ -44,8 +44,8 @@
 - [x] Commit google API
 
 ### Phase 3 : Scraping (Tours 8-14)
-- [ ] Creer src/phone_extractor.py (regex FR)
-- [ ] Tester extraction numeros
+- [x] Creer src/phone_extractor.py (regex FR)
+- [x] Tester extraction numeros
 - [ ] Creer src/contact_scraper.py
 - [ ] Implementer detection reservation
 - [ ] Implementer extraction email
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 2
-**Derniere action :** Google API Phase 2 terminée avec Text Search et Place Details
-**Prochaine action :** Créer src/phone_extractor.py (regex FR)
+**Tour :** 3
+**Derniere action :** Créé src/phone_extractor.py avec regex FR et tests réussis
+**Prochaine action :** Créer src/contact_scraper.py
 
 ---
 

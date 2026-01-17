@@ -37,11 +37,11 @@
 - [x] Tester connexion API Google
 - [x] Commit setup
 
-### Phase 2 : Google API (Tours 4-7)
-- [ ] Implementer Text Search
-- [ ] Implementer Place Details
-- [ ] Tester sur Paris restaurant
-- [ ] Commit google API
+### Phase 2 : Google API (Tours 4-7) ✓
+- [x] Implementer Text Search
+- [x] Implementer Place Details
+- [x] Tester sur Paris restaurant
+- [x] Commit google API
 
 ### Phase 3 : Scraping (Tours 8-14)
 - [ ] Creer src/phone_extractor.py (regex FR)
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 1
-**Derniere action :** Setup Google Places client terminé
-**Prochaine action :** Implementer Text Search API
+**Tour :** 2
+**Derniere action :** Google API Phase 2 terminée avec Text Search et Place Details
+**Prochaine action :** Créer src/phone_extractor.py (regex FR)
 
 ---
 

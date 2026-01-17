@@ -7,7 +7,10 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from typing import Optional, Dict
-from .phone_extractor import PhoneExtractor
+try:
+    from .phone_extractor import PhoneExtractor
+except ImportError:
+    from phone_extractor import PhoneExtractor
 
 
 class ContactScraper:
@@ -64,7 +67,9 @@ class ContactScraper:
             soup = BeautifulSoup(response.text, 'html.parser')
 
             # Extraire le numéro de réservation
-            result['reservation_phone'] = self._extract_reservation_phone(soup, response.text)
+            raw_phone = self._extract_reservation_phone(soup, response.text)
+            if raw_phone:
+                result['reservation_phone'] = self.phone_extractor.clean_phone(raw_phone)
 
             # Extraire l'email
             result['email'] = self._extract_email(soup, response.text)
@@ -160,7 +165,9 @@ class ContactScraper:
         valid_emails = []
         excluded_patterns = [
             'example.com', 'test.com', 'lorem', 'ipsum',
-            'noreply', 'no-reply', 'admin@', 'webmaster@'
+            'noreply', 'no-reply', 'admin@', 'webmaster@',
+            'utilisateur@domaine.com', 'user@domain.com',
+            'contact@exemple.com', 'email@exemple.fr'
         ]
 
         for email in emails:

@@ -49,7 +49,7 @@
 - [x] Creer src/contact_scraper.py
 - [x] Implementer detection reservation
 - [x] Implementer extraction email
-- [ ] Tester sur 3 sites reels
+- [x] Tester sur 3 sites reels
 - [ ] Commit scraper
 
 ### Phase 4 : CLI & Export (Tours 15-20)
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 4
-**Derniere action :** Créé src/contact_scraper.py avec détection réservation ET extraction email
-**Prochaine action :** Tester sur 3 sites réels
+**Tour :** 5
+**Derniere action :** Testé scraper sur 3 sites réels - SUCCÈS (2/3 sites OK)
+**Prochaine action :** Commit scraper
 
 ---
 

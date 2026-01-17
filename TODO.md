@@ -46,9 +46,9 @@
 ### Phase 3 : Scraping (Tours 8-14)
 - [x] Creer src/phone_extractor.py (regex FR)
 - [x] Tester extraction numeros
-- [ ] Creer src/contact_scraper.py
-- [ ] Implementer detection reservation
-- [ ] Implementer extraction email
+- [x] Creer src/contact_scraper.py
+- [x] Implementer detection reservation
+- [x] Implementer extraction email
 - [ ] Tester sur 3 sites reels
 - [ ] Commit scraper
 
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 3
-**Derniere action :** Créé src/phone_extractor.py avec regex FR et tests réussis
-**Prochaine action :** Créer src/contact_scraper.py
+**Tour :** 4
+**Derniere action :** Créé src/contact_scraper.py avec détection réservation ET extraction email
+**Prochaine action :** Tester sur 3 sites réels
 
 ---
 

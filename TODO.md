@@ -60,7 +60,7 @@
 - [x] Commit CLI
 
 ### Phase 5 : Finalisation (Tours 21-25)
-- [ ] Gestion erreurs robuste
+- [x] Gestion erreurs robuste
 - [ ] Ajouter timeouts
 - [ ] Creer README.md
 - [ ] Verification finale
@@ -70,9 +70,9 @@
 
 ## Etat Actuel
 
-**Tour :** 8
-**Derniere action :** Test complet 10 restaurants réussi - 7/10 sites scrapés, numéros extraits, commit CLI
-**Prochaine action :** Gestion erreurs robuste (amélioration stabilité système)
+**Tour :** 9
+**Derniere action :** Gestion erreurs robuste implémentée - codes d'erreur détaillés, retry automatique, validation des données
+**Prochaine action :** Ajouter timeouts (configurations timeout par défaut 10s)
 
 ---
 

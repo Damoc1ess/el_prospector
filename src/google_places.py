@@ -35,6 +35,9 @@ class GooglePlacesClient:
         Returns:
             List of place dictionaries with basic info
         """
+        if not city or not city.strip():
+            raise ValueError("City name cannot be empty")
+
         if place_type == "all":
             text_query = f"hotels and restaurants in {city}"
         else:
@@ -56,31 +59,63 @@ class GooglePlacesClient:
 
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=10)
+
+            # Handle HTTP errors with detailed messages
+            if response.status_code == 401:
+                raise requests.HTTPError("API key invalide ou manquante")
+            elif response.status_code == 403:
+                raise requests.HTTPError("API key sans permissions ou quota dépassé")
+            elif response.status_code == 400:
+                raise requests.HTTPError(f"Requête invalide: {response.text}")
+            elif response.status_code >= 500:
+                raise requests.HTTPError(f"Erreur serveur Google (status {response.status_code})")
+
             response.raise_for_status()
             data = response.json()
 
             places = data.get('places', [])
+            if not places:
+                print(f"⚠️  Aucun établissement {place_type} trouvé à {city}")
 
             # Transform to compatible format
             transformed_places = []
             for place in places:
-                transformed_place = {
-                    'place_id': place.get('id'),
-                    'name': place.get('displayName', {}).get('text', 'Unknown'),
-                    'formatted_address': place.get('formattedAddress', 'Unknown'),
-                    'rating': place.get('rating'),
-                    'user_ratings_total': place.get('userRatingCount', 0)
-                }
-                transformed_places.append(transformed_place)
+                try:
+                    transformed_place = {
+                        'place_id': place.get('id'),
+                        'name': place.get('displayName', {}).get('text', 'Unknown'),
+                        'formatted_address': place.get('formattedAddress', 'Unknown'),
+                        'rating': place.get('rating'),
+                        'user_ratings_total': place.get('userRatingCount', 0)
+                    }
+                    # Validate essential fields
+                    if not transformed_place['place_id']:
+                        print(f"⚠️  Place sans ID ignoré: {transformed_place['name']}")
+                        continue
+
+                    transformed_places.append(transformed_place)
+                except Exception as e:
+                    print(f"⚠️  Erreur parsing place: {e}")
+                    continue
 
             # Sleep to respect API rate limits
             time.sleep(1)
 
             return transformed_places
 
-        except requests.RequestException as e:
-            print(f"Error searching places: {e}")
-            return []
+        except requests.Timeout:
+            raise requests.RequestException(f"Timeout lors de la recherche à {city} (>10s)")
+        except requests.ConnectionError:
+            raise requests.RequestException("Erreur de connexion à Google Places API")
+        except requests.HTTPError as e:
+            raise requests.RequestException(f"Erreur HTTP Google Places: {e}")
+        except ValueError as e:
+            if "JSON" in str(e):
+                raise requests.RequestException("Réponse Google Places invalide (JSON malformé)")
+            else:
+                raise e
+        except Exception as e:
+            raise requests.RequestException(f"Erreur inattendue Google Places: {e}")
 
     def get_place_details(self, place_id: str) -> Optional[Dict]:
         """
@@ -92,6 +127,9 @@ class GooglePlacesClient:
         Returns:
             Dictionary with detailed place information or None if error
         """
+        if not place_id or not place_id.strip():
+            raise ValueError("Place ID cannot be empty")
+
         url = f"{self.BASE_URL}/places/{place_id}"
 
         headers = {
@@ -102,25 +140,64 @@ class GooglePlacesClient:
 
         try:
             response = requests.get(url, headers=headers, timeout=10)
+
+            # Handle HTTP errors with detailed messages
+            if response.status_code == 401:
+                raise requests.HTTPError("API key invalide ou manquante")
+            elif response.status_code == 403:
+                raise requests.HTTPError("API key sans permissions ou quota dépassé")
+            elif response.status_code == 404:
+                print(f"⚠️  Place ID {place_id} introuvable")
+                return None
+            elif response.status_code == 400:
+                raise requests.HTTPError(f"Place ID invalide: {place_id}")
+            elif response.status_code >= 500:
+                raise requests.HTTPError(f"Erreur serveur Google (status {response.status_code})")
+
             response.raise_for_status()
             data = response.json()
 
-            # Transform to compatible format
-            result = {
-                'name': data.get('displayName', {}).get('text', 'Unknown'),
-                'formatted_address': data.get('formattedAddress', 'Unknown'),
-                'formatted_phone_number': data.get('nationalPhoneNumber'),
-                'website': data.get('websiteUri'),
-                'rating': data.get('rating'),
-                'user_ratings_total': data.get('userRatingCount', 0)
-            }
+            # Validate response structure
+            if not isinstance(data, dict):
+                raise ValueError("Réponse Google Places invalide")
 
-            # Sleep to respect API rate limits
-            time.sleep(1)
-            return result
+            # Transform to compatible format with error handling
+            try:
+                result = {
+                    'name': data.get('displayName', {}).get('text', 'Unknown') if data.get('displayName') else 'Unknown',
+                    'formatted_address': data.get('formattedAddress', 'Unknown'),
+                    'formatted_phone_number': data.get('nationalPhoneNumber'),
+                    'international_phone_number': data.get('nationalPhoneNumber'),  # Compatibility
+                    'website': data.get('websiteUri'),
+                    'rating': data.get('rating'),
+                    'user_ratings_total': data.get('userRatingCount', 0)
+                }
 
-        except requests.RequestException as e:
-            print(f"Error getting place details: {e}")
+                # Sleep to respect API rate limits
+                time.sleep(1)
+                return result
+
+            except Exception as e:
+                print(f"⚠️  Erreur parsing détails place {place_id}: {e}")
+                return None
+
+        except requests.Timeout:
+            print(f"⚠️  Timeout détails place {place_id} (>10s)")
+            return None
+        except requests.ConnectionError:
+            print(f"⚠️  Connexion échouée pour place {place_id}")
+            return None
+        except requests.HTTPError as e:
+            print(f"⚠️  Erreur HTTP place {place_id}: {e}")
+            return None
+        except ValueError as e:
+            if "JSON" in str(e):
+                print(f"⚠️  Réponse invalide pour place {place_id}")
+            else:
+                raise e
+            return None
+        except Exception as e:
+            print(f"⚠️  Erreur inattendue place {place_id}: {e}")
             return None
 
     def test_connection(self) -> bool:

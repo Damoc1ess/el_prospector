@@ -48,47 +48,128 @@ class ContactScraper:
             'email': None
         }
 
-        if not website_url:
+        if not website_url or not website_url.strip():
+            return result
+
+        # Normalize URL
+        try:
+            if not website_url.startswith(('http://', 'https://')):
+                website_url = 'https://' + website_url
+        except Exception:
+            print("ERREUR: URL invalide")
             return result
 
         try:
-            print(f"Scraping {website_url}...", end=" ")
+            # Télécharger la page avec retry sur certaines erreurs
+            response = self._download_page_with_retry(website_url)
+            if not response:
+                return result
 
-            # Télécharger la page
-            response = requests.get(
-                website_url,
-                headers=self.headers,
-                timeout=self.timeout,
-                allow_redirects=True
-            )
-            response.raise_for_status()
+            # Vérifier le content-type
+            content_type = response.headers.get('content-type', '').lower()
+            if 'text/html' not in content_type and 'application/xml' not in content_type:
+                print("ERREUR: contenu non HTML")
+                return result
 
-            # Parser le HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
+            # Vérifier la taille de la réponse
+            if len(response.content) > 5_000_000:  # 5MB max
+                print("ERREUR: page trop volumineuse")
+                return result
+
+            # Parser le HTML avec gestion d'erreurs
+            try:
+                soup = BeautifulSoup(response.text, 'html.parser')
+            except Exception as e:
+                print(f"ERREUR: parsing HTML - {str(e)[:50]}")
+                return result
 
             # Extraire le numéro de réservation
-            raw_phone = self._extract_reservation_phone(soup, response.text)
-            if raw_phone:
-                result['reservation_phone'] = self.phone_extractor.clean_phone(raw_phone)
+            try:
+                raw_phone = self._extract_reservation_phone(soup, response.text)
+                if raw_phone:
+                    cleaned_phone = self.phone_extractor.clean_phone(raw_phone)
+                    if cleaned_phone:
+                        result['reservation_phone'] = cleaned_phone
+            except Exception as e:
+                print(f"ERREUR extraction téléphone: {str(e)[:30]}")
 
             # Extraire l'email
-            result['email'] = self._extract_email(soup, response.text)
+            try:
+                extracted_email = self._extract_email(soup, response.text)
+                if extracted_email:
+                    result['email'] = extracted_email
+            except Exception as e:
+                print(f"ERREUR extraction email: {str(e)[:30]}")
 
-            print("OK")
+            print("OK" if result['reservation_phone'] or result['email'] else "Aucun contact trouvé")
 
         except requests.exceptions.Timeout:
-            print("ERREUR: timeout")
+            print("ERREUR: timeout (>10s)")
         except requests.exceptions.ConnectionError:
             print("ERREUR: connexion impossible")
         except requests.exceptions.HTTPError as e:
-            print(f"ERREUR: HTTP {e.response.status_code}")
+            status_code = getattr(e.response, 'status_code', 'Unknown')
+            if status_code == 403:
+                print("ERREUR: accès interdit (403)")
+            elif status_code == 404:
+                print("ERREUR: page non trouvée (404)")
+            elif status_code == 503:
+                print("ERREUR: service indisponible (503)")
+            else:
+                print(f"ERREUR: HTTP {status_code}")
+        except requests.exceptions.TooManyRedirects:
+            print("ERREUR: trop de redirections")
+        except requests.exceptions.RequestException as e:
+            print(f"ERREUR: réseau - {str(e)[:50]}")
         except Exception as e:
-            print(f"ERREUR: {str(e)}")
+            print(f"ERREUR: inattendue - {str(e)[:50]}")
 
         # Sleep pour éviter de surcharger les serveurs
         time.sleep(2)
 
         return result
+
+    def _download_page_with_retry(self, url: str, max_retries: int = 2):
+        """Télécharge une page avec retry sur certaines erreurs."""
+        for attempt in range(max_retries + 1):
+            try:
+                response = requests.get(
+                    url,
+                    headers=self.headers,
+                    timeout=self.timeout,
+                    allow_redirects=True,
+                    verify=True  # Vérifier les certificats SSL
+                )
+
+                # Check for specific retry-able status codes
+                if response.status_code == 503 and attempt < max_retries:
+                    print(f"  Service indisponible, retry {attempt + 1}/{max_retries}...", end=" ")
+                    time.sleep(3)  # Wait before retry
+                    continue
+                elif response.status_code == 429 and attempt < max_retries:  # Rate limit
+                    print(f"  Rate limit, retry {attempt + 1}/{max_retries}...", end=" ")
+                    time.sleep(5)  # Wait longer for rate limits
+                    continue
+
+                response.raise_for_status()
+                return response
+
+            except requests.exceptions.Timeout as e:
+                if attempt < max_retries:
+                    print(f"  Timeout, retry {attempt + 1}/{max_retries}...", end=" ")
+                    time.sleep(2)
+                    continue
+                else:
+                    raise e
+            except requests.exceptions.ConnectionError as e:
+                if attempt < max_retries:
+                    print(f"  Connexion échouée, retry {attempt + 1}/{max_retries}...", end=" ")
+                    time.sleep(2)
+                    continue
+                else:
+                    raise e
+
+        return None
 
     def _extract_reservation_phone(self, soup: BeautifulSoup, html_text: str) -> Optional[str]:
         """Extraire le numéro de réservation du HTML."""

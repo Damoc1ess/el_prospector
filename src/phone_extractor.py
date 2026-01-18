@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Module d'extraction et formatage des numéros de téléphone français.
+French phone number extraction and formatting module.
 
-Formats supportés :
+Supported formats:
 - +33 X XX XX XX XX
 - 0X XX XX XX XX
 - 0X.XX.XX.XX.XX
@@ -15,18 +15,18 @@ from typing import List, Optional
 
 
 class PhoneExtractor:
-    """Extracteur de numéros de téléphone français."""
+    """French phone number extractor."""
 
-    # Pattern regex pour numéros français
+    # Regex pattern for French phone numbers
     PHONE_PATTERN = r'(?:\+33|0)\s*[1-9](?:[\s.-]*\d{2}){4}'
 
-    # Mots-clés pour détecter les numéros de réservation
+    # Keywords to detect reservation phone numbers
     RESERVATION_KEYWORDS = [
-        'reservation', 'reservations', 'reserver', 'réserver', 'réservation',
+        'reservation', 'reservations', 'reserver',
         'booking', 'book now', 'book a table', 'book',
-        'contact', 'nous contacter', 'contactez',
-        'tel', 'telephone', 'téléphone', 'phone',
-        'appelez', 'call us', 'call'
+        'contact', 'contactez',
+        'tel', 'telephone', 'phone',
+        'call us', 'call'
     ]
 
     def __init__(self):
@@ -34,13 +34,13 @@ class PhoneExtractor:
 
     def extract_phones(self, text: str) -> List[str]:
         """
-        Extrait tous les numéros de téléphone français du texte.
+        Extract all French phone numbers from text.
 
         Args:
-            text: Texte à analyser
+            text: Text to analyze
 
         Returns:
-            Liste des numéros trouvés (bruts)
+            List of found phone numbers (raw)
         """
         if not text:
             return []
@@ -50,66 +50,66 @@ class PhoneExtractor:
 
     def clean_phone(self, phone: str) -> str:
         """
-        Nettoie et formate un numéro de téléphone.
+        Clean and format a phone number.
 
         Args:
-            phone: Numéro brut
+            phone: Raw phone number
 
         Returns:
-            Numéro nettoyé au format +33 X XX XX XX XX
+            Cleaned phone number in format +33 X XX XX XX XX
         """
         if not phone:
             return ""
 
-        # Supprimer tous les caractères non-numériques sauf +
+        # Remove all non-numeric characters except +
         cleaned = re.sub(r'[^\d+]', '', phone)
 
-        # Convertir 0X en +33X
+        # Convert 0X to +33X
         if cleaned.startswith('0'):
             cleaned = '+33' + cleaned[1:]
 
-        # Vérifier que le numéro commence bien par +33
+        # Check that number starts with +33
         if not cleaned.startswith('+33'):
             return ""
 
-        # Vérifier la longueur (doit être +33XXXXXXXXX = 12 caractères)
+        # Check length (must be +33XXXXXXXXX = 12 characters)
         if len(cleaned) != 12:
             return ""
 
-        # Formater : +33 X XX XX XX XX
+        # Format: +33 X XX XX XX XX
         formatted = f"+33 {cleaned[3]} {cleaned[4:6]} {cleaned[6:8]} {cleaned[8:10]} {cleaned[10:12]}"
 
         return formatted
 
     def find_reservation_phone(self, html_content: str, tel_links: List[str] = None) -> Optional[str]:
         """
-        Trouve le numéro de téléphone le plus probable pour les réservations.
+        Find the most likely phone number for reservations.
 
-        Logique :
-        1. Chercher dans les liens tel: si fournis
-        2. Chercher les numéros près des mots "réservation", "booking"
-        3. Sinon prendre le premier numéro valide de la page
+        Logic:
+        1. Search in tel: links if provided
+        2. Search for phone numbers near "reservation", "booking" keywords
+        3. Otherwise take the first valid phone number on the page
 
         Args:
-            html_content: Contenu HTML de la page
-            tel_links: Liste des numéros trouvés dans les liens tel: (optionnel)
+            html_content: HTML content of the page
+            tel_links: List of phone numbers found in tel: links (optional)
 
         Returns:
-            Numéro de réservation formaté ou None
+            Formatted reservation phone number or None
         """
-        # 1. Priorité aux liens tel: s'ils existent
+        # 1. Priority to tel: links if they exist
         if tel_links:
             for tel_phone in tel_links:
                 cleaned = self.clean_phone(tel_phone)
                 if cleaned:
                     return cleaned
 
-        # 2. Chercher les numéros près des mots-clés de réservation
+        # 2. Search for phone numbers near reservation keywords
         reservation_phone = self._find_phone_near_keywords(html_content)
         if reservation_phone:
             return reservation_phone
 
-        # 3. Fallback : premier numéro valide de la page
+        # 3. Fallback: first valid phone number on the page
         all_phones = self.extract_phones(html_content)
         for phone in all_phones:
             cleaned = self.clean_phone(phone)
@@ -120,22 +120,22 @@ class PhoneExtractor:
 
     def _find_phone_near_keywords(self, text: str) -> Optional[str]:
         """
-        Cherche un numéro proche des mots-clés de réservation.
+        Search for a phone number near reservation keywords.
 
         Args:
-            text: Texte à analyser
+            text: Text to analyze
 
         Returns:
-            Numéro formaté ou None
+            Formatted phone number or None
         """
         text_lower = text.lower()
 
-        # Pour chaque mot-clé, chercher les numéros dans un rayon de 200 caractères
+        # For each keyword, search for phone numbers within 200 characters
         for keyword in self.RESERVATION_KEYWORDS:
             keyword_positions = []
             start = 0
 
-            # Trouver toutes les occurrences du mot-clé
+            # Find all occurrences of the keyword
             while True:
                 pos = text_lower.find(keyword, start)
                 if pos == -1:
@@ -143,14 +143,14 @@ class PhoneExtractor:
                 keyword_positions.append(pos)
                 start = pos + 1
 
-            # Pour chaque occurrence, chercher des numéros autour
+            # For each occurrence, search for phone numbers around it
             for pos in keyword_positions:
-                # Zone d'analyse : 200 caractères avant et après le mot-clé
+                # Analysis zone: 200 characters before and after the keyword
                 start_range = max(0, pos - 200)
                 end_range = min(len(text), pos + len(keyword) + 200)
                 context = text[start_range:end_range]
 
-                # Chercher des numéros dans cette zone
+                # Search for phone numbers in this zone
                 phones = self.extract_phones(context)
                 for phone in phones:
                     cleaned = self.clean_phone(phone)
@@ -161,7 +161,7 @@ class PhoneExtractor:
 
 
 def test_phone_extraction():
-    """Tests unitaires pour l'extraction de numéros."""
+    """Unit tests for phone number extraction."""
     extractor = PhoneExtractor()
 
     test_cases = [
@@ -171,22 +171,22 @@ def test_phone_extraction():
         "01-23-45-67-89",
         "0123456789",
         "+33123456789",
-        "Appelez le 01 23 45 67 89 pour réserver",
-        "Réservation : 06 12 34 56 78",
+        "Call 01 23 45 67 89 to book",
+        "Reservation: 06 12 34 56 78",
         "Tel: +33 4 56 78 90 12",
-        "Numéro invalide : 123",
-        "Contact : 01 23 45 67 89 ou email@test.fr"
+        "Invalid number: 123",
+        "Contact: 01 23 45 67 89 or email@test.fr"
     ]
 
-    print("=== Test d'extraction de numéros ===")
+    print("=== Phone Number Extraction Test ===")
     for i, text in enumerate(test_cases, 1):
         phones = extractor.extract_phones(text)
         print(f"Test {i}: '{text}'")
-        print(f"  Trouvés: {phones}")
+        print(f"  Found: {phones}")
 
         for phone in phones:
             cleaned = extractor.clean_phone(phone)
-            print(f"  Nettoyé: '{phone}' → '{cleaned}'")
+            print(f"  Cleaned: '{phone}' -> '{cleaned}'")
         print()
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI principale pour la prospection d'hotels et restaurants.
+Main CLI for hotel and restaurant prospecting.
 """
 
 import argparse
@@ -15,80 +15,80 @@ from exporter import Exporter
 
 
 def main():
-    """Point d'entrée principal."""
+    """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Outil de prospection hotels/restaurants avec extraction contact"
+        description="Hotel/restaurant prospecting tool with contact extraction"
     )
 
     parser.add_argument(
         "--city",
         required=True,
-        help="Ville à prospecter (ex: Paris, Lyon)"
+        help="City to prospect (e.g., Paris, Lyon)"
     )
 
     parser.add_argument(
         "--type",
         choices=["hotel", "restaurant", "all"],
         default="all",
-        help="Type d'établissement (défaut: all)"
+        help="Establishment type (default: all)"
     )
 
     parser.add_argument(
         "--limit",
         type=int,
         default=20,
-        help="Nombre maximum de résultats (défaut: 20)"
+        help="Maximum number of results (default: 20)"
     )
 
     parser.add_argument(
         "--no-scrape",
         action="store_true",
-        help="Désactiver le scraping des sites web (plus rapide)"
+        help="Disable website scraping (faster)"
     )
 
     parser.add_argument(
         "--output",
         default="prospection",
-        help="Nom de fichier de sortie sans extension (défaut: prospection)"
+        help="Output filename without extension (default: prospection)"
     )
 
     parser.add_argument(
         "--format",
         choices=["csv", "json", "both"],
         default="csv",
-        help="Format d'export (défaut: csv)"
+        help="Export format (default: csv)"
     )
 
     args = parser.parse_args()
 
-    # Initialisation des clients
-    print(f"🔍 Recherche d'établissements à {args.city}...")
+    # Initialize clients
+    print(f"Searching for establishments in {args.city}...")
 
     try:
         google_client = GooglePlacesClient()
         scraper = ContactScraper() if not args.no_scrape else None
         exporter = Exporter()
 
-        # Validation des arguments
+        # Validate arguments
         if args.limit <= 0:
-            print(f"❌ Limite invalide: {args.limit} (doit être > 0)")
+            print(f"ERROR: Invalid limit: {args.limit} (must be > 0)")
             sys.exit(1)
         elif args.limit > 500:
-            print(f"⚠️  Limite très élevée: {args.limit}, cela pourrait prendre du temps")
+            print(f"WARNING: Very high limit: {args.limit}, this may take a while")
 
     except ValueError as e:
         if "GOOGLE_MAPS_API_KEY" in str(e):
-            print("❌ Clé API Google manquante")
-            print("  Créez un fichier .env avec GOOGLE_MAPS_API_KEY=votre_cle")
+            print("ERROR: Missing Google API key")
+            print("  Create a .env file with GOOGLE_MAPS_API_KEY=your_key")
             sys.exit(1)
         else:
-            print(f"❌ Erreur de configuration: {e}")
+            print(f"ERROR: Configuration error: {e}")
             sys.exit(1)
     except Exception as e:
-        print(f"❌ Erreur d'initialisation inattendue: {e}")
+        print(f"ERROR: Unexpected initialization error: {e}")
         sys.exit(1)
 
-    # Recherche Google Places
+    # Google Places search
     try:
         establishments = search_establishments(
             google_client,
@@ -98,25 +98,25 @@ def main():
         )
 
         if not establishments:
-            print(f"❌ Aucun établissement trouvé pour {args.city}")
-            print(f"  Vérifiez l'orthographe de '{args.city}' ou essayez une ville plus connue")
+            print(f"ERROR: No establishments found for {args.city}")
+            print(f"  Check the spelling of '{args.city}' or try a more well-known city")
             sys.exit(1)
 
-        print(f"✅ {len(establishments)} établissements trouvés")
+        print(f"OK: {len(establishments)} establishments found")
 
     except ValueError as e:
-        print(f"❌ Erreur de paramètres de recherche: {e}")
+        print(f"ERROR: Search parameter error: {e}")
         sys.exit(1)
     except requests.RequestException as e:
-        print(f"❌ Erreur de connexion Google Places: {e}")
-        print("  Vérifiez votre connexion internet et votre clé API")
+        print(f"ERROR: Google Places connection error: {e}")
+        print("  Check your internet connection and API key")
         sys.exit(1)
     except Exception as e:
-        print(f"❌ Erreur de recherche inattendue: {e}")
+        print(f"ERROR: Unexpected search error: {e}")
         sys.exit(1)
 
-    # Enrichissement avec détails Google
-    print("📋 Récupération des détails...")
+    # Enrich with Google details
+    print("Fetching details...")
     enriched_data = []
     failed_details = 0
     max_failures = len(establishments) // 2  # Allow up to 50% failures
@@ -129,7 +129,7 @@ def main():
             details = google_client.get_place_details(place['place_id'])
 
             if details:
-                # Données de base avec validation
+                # Base data with validation
                 contact_data = {
                     'name': place.get('name', '').strip() or 'N/A',
                     'address': place.get('formatted_address', '').strip() or 'N/A',
@@ -144,7 +144,7 @@ def main():
                 }
 
                 enriched_data.append(contact_data)
-                print("✅")
+                print("OK")
             else:
                 # Place details failed, but keep basic info
                 contact_data = {
@@ -161,16 +161,16 @@ def main():
                 }
                 enriched_data.append(contact_data)
                 failed_details += 1
-                print("⚠️  Pas de détails")
+                print("WARNING: No details")
 
             time.sleep(1)  # Respect API rate limits
 
         except KeyboardInterrupt:
-            print("\n❌ Interrompu par l'utilisateur")
+            print("\nERROR: Interrupted by user")
             break
         except Exception as e:
             failed_details += 1
-            print(f"❌ Erreur: {str(e)[:30]}")
+            print(f"ERROR: {str(e)[:30]}")
 
             # Keep basic info even if details fail
             try:
@@ -192,24 +192,24 @@ def main():
 
             # Stop if too many failures
             if failed_details > max_failures:
-                print(f"\n❌ Trop d'échecs ({failed_details}/{len(establishments)}), arrêt")
+                print(f"\nERROR: Too many failures ({failed_details}/{len(establishments)}), stopping")
                 break
 
     if failed_details > 0:
-        print(f"\n⚠️  {failed_details}/{len(establishments)} établissements sans détails complets")
+        print(f"\nWARNING: {failed_details}/{len(establishments)} establishments without complete details")
 
-    # Scraping des sites web si demandé
+    # Scrape websites if requested
     if scraper and not args.no_scrape:
-        print("\n🌐 Scraping des sites web pour contacts...")
+        print("\nScraping websites for contacts...")
 
         sites_to_scrape = [data for data in enriched_data if data.get('website')]
         sites_without_website = len(enriched_data) - len(sites_to_scrape)
 
         if sites_without_website > 0:
-            print(f"  {sites_without_website}/{len(enriched_data)} établissements sans site web")
+            print(f"  {sites_without_website}/{len(enriched_data)} establishments without website")
 
         if not sites_to_scrape:
-            print("  ❌ Aucun site web à scraper")
+            print("  ERROR: No websites to scrape")
         else:
             scraping_failures = 0
             successful_scrapes = 0
@@ -238,78 +238,78 @@ def main():
                         successful_scrapes += 1
 
                 except KeyboardInterrupt:
-                    print("\n❌ Scraping interrompu par l'utilisateur")
+                    print("\nERROR: Scraping interrupted by user")
                     break
                 except Exception as e:
                     scraping_failures += 1
-                    print(f"❌ Erreur: {str(e)[:30]}")
+                    print(f"ERROR: {str(e)[:30]}")
 
                     # Stop if too many scraping failures
                     if scraping_failures > max_scraping_failures:
-                        print(f"\n⚠️  Trop d'échecs de scraping ({scraping_failures}/{len(sites_to_scrape)})")
-                        print("  Continuant sans scraping des sites restants...")
+                        print(f"\nWARNING: Too many scraping failures ({scraping_failures}/{len(sites_to_scrape)})")
+                        print("  Continuing without scraping remaining sites...")
                         break
 
             # Summary of scraping results
             if sites_to_scrape:
-                print(f"\n📊 Scraping terminé: {successful_scrapes} succès, {scraping_failures} échecs")
+                print(f"\nScraping complete: {successful_scrapes} successful, {scraping_failures} failed")
 
-    # Validation finale des données
+    # Final data validation
     if not enriched_data:
-        print("❌ Aucune donnée à exporter")
+        print("ERROR: No data to export")
         sys.exit(1)
 
-    # Export des résultats
-    print(f"\n📊 Export des résultats ({len(enriched_data)} entrées)...")
+    # Export results
+    print(f"\nExporting results ({len(enriched_data)} entries)...")
 
     try:
-        # Validation des données avant export
+        # Validate data before export
         validation_errors = exporter.validate_data(enriched_data)
         if validation_errors:
-            print("⚠️  Avertissements de validation:")
+            print("WARNING: Validation warnings:")
             for error in validation_errors[:5]:  # Show only first 5 errors
                 print(f"  - {error}")
             if len(validation_errors) > 5:
-                print(f"  ... et {len(validation_errors) - 5} autres erreurs")
+                print(f"  ... and {len(validation_errors) - 5} more errors")
 
         export_success = True
 
         if args.format in ["csv", "both"]:
-            print("  Exportation CSV...", end=" ")
+            print("  Exporting CSV...", end=" ")
             csv_success = exporter.export_csv(enriched_data, f"{args.output}.csv")
             if not csv_success:
                 export_success = False
-                print("❌")
+                print("FAILED")
             else:
-                print("✅")
+                print("OK")
 
         if args.format in ["json", "both"]:
-            print("  Exportation JSON...", end=" ")
+            print("  Exporting JSON...", end=" ")
             json_success = exporter.export_json(enriched_data, f"{args.output}.json")
             if not json_success:
                 export_success = False
-                print("❌")
+                print("FAILED")
             else:
-                print("✅")
+                print("OK")
 
         if not export_success:
-            print("❌ Échec de l'export")
+            print("ERROR: Export failed")
             sys.exit(1)
 
     except PermissionError:
-        print("❌ Erreur de permissions - impossible d'écrire les fichiers")
-        print("  Vérifiez les droits d'écriture dans le dossier courant")
+        print("ERROR: Permission error - cannot write files")
+        print("  Check write permissions in the current folder")
         sys.exit(1)
     except OSError as e:
-        print(f"❌ Erreur système d'export: {e}")
-        print("  Vérifiez l'espace disque disponible")
+        print(f"ERROR: System export error: {e}")
+        print("  Check available disk space")
         sys.exit(1)
     except Exception as e:
-        print(f"❌ Erreur d'export inattendue: {e}")
+        print(f"ERROR: Unexpected export error: {e}")
         sys.exit(1)
 
-    print(f"\n🎉 Prospection terminée avec succès!")
-    print(f"📁 Fichiers générés: {args.output}.{args.format}")
+    print(f"\nProspecting completed successfully!")
+    print(f"Generated files: {args.output}.{args.format}")
 
     # Statistics summary
     stats_summary = []
@@ -317,16 +317,16 @@ def main():
     with_reservation_phone = sum(1 for d in enriched_data if d.get('reservation_phone'))
     with_email = sum(1 for d in enriched_data if d.get('email'))
 
-    print(f"📊 Résumé:")
-    print(f"  - {len(enriched_data)} établissements exportés")
-    print(f"  - {successful_places} avec données Google complètes")
+    print(f"Summary:")
+    print(f"  - {len(enriched_data)} establishments exported")
+    print(f"  - {successful_places} with complete Google data")
     if not args.no_scrape:
-        print(f"  - {with_reservation_phone} avec téléphone réservation")
-        print(f"  - {with_email} avec adresse email")
+        print(f"  - {with_reservation_phone} with reservation phone")
+        print(f"  - {with_email} with email address")
 
 
 def search_establishments(client: GooglePlacesClient, city: str, establishment_type: str, limit: int) -> List[Dict]:
-    """Recherche des établissements via Google Places."""
+    """Search for establishments via Google Places."""
     results = []
 
     if establishment_type == "all":
@@ -340,37 +340,37 @@ def search_establishments(client: GooglePlacesClient, city: str, establishment_t
         try:
             places = client.search_places(city, search_type)
 
-            # Limiter les résultats
+            # Limit results
             type_limit = limit // len(types_to_search) if establishment_type == "all" else limit
             results.extend(places[:type_limit])
 
             time.sleep(1)  # Rate limiting
 
         except Exception as e:
-            print(f"⚠️  Erreur recherche {search_type}: {e}")
+            print(f"WARNING: Search error for {search_type}: {e}")
             continue
 
     return results[:limit]
 
 
 def determine_type(place: Dict) -> str:
-    """Détermine le type d'établissement à partir du contexte de recherche."""
-    # Pour l'instant, on utilise le type de recherche plutôt que les types Google
-    # car les données Google Places v1 ne retournent pas les types détaillés
+    """Determine establishment type from search context."""
+    # For now, we use the search type rather than Google types
+    # because Google Places v1 data doesn't return detailed types
     name = place.get('name', '').lower()
     address = place.get('formatted_address', '').lower()
 
-    # Mots-clés pour hotels
-    hotel_keywords = ['hotel', 'hôtel', 'auberge', 'gîte', 'chambre', 'suite', 'resort']
+    # Hotel keywords
+    hotel_keywords = ['hotel', 'auberge', 'gite', 'chambre', 'suite', 'resort']
     if any(keyword in name for keyword in hotel_keywords):
         return 'hotel'
 
-    # Mots-clés pour restaurants
-    restaurant_keywords = ['restaurant', 'bistro', 'brasserie', 'café', 'pizzeria', 'bar', 'bouillon']
+    # Restaurant keywords
+    restaurant_keywords = ['restaurant', 'bistro', 'brasserie', 'cafe', 'pizzeria', 'bar', 'bouillon']
     if any(keyword in name for keyword in restaurant_keywords):
         return 'restaurant'
 
-    # Par défaut, considérer comme restaurant si c'est ambigu
+    # Default to restaurant if ambiguous
     return 'restaurant'
 
 

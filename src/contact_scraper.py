@@ -1,5 +1,5 @@
 """
-Contact scraper pour extraire numeros de reservation et emails depuis les sites web.
+Contact scraper for extracting reservation phone numbers and emails from websites.
 """
 
 import re
@@ -14,7 +14,7 @@ except ImportError:
 
 
 class ContactScraper:
-    """Scraper pour extraire les contacts depuis les sites web."""
+    """Scraper for extracting contacts from websites."""
 
     def __init__(self):
         self.phone_extractor = PhoneExtractor()
@@ -23,25 +23,25 @@ class ContactScraper:
         }
         self.timeout = 10
 
-        # Mots-clés pour détecter les numéros de réservation
+        # Keywords to detect reservation phone numbers
         self.reservation_keywords = [
-            'reservation', 'réservation', 'réserver', 'reserver',
-            'booking', 'book now', 'book a table', 'réserver une table',
-            'contact', 'nous contacter', 'appelez', 'call us'
+            'reservation', 'reservations', 'reserver',
+            'booking', 'book now', 'book a table',
+            'contact', 'call us', 'phone'
         ]
 
-        # Pattern pour emails
+        # Email pattern
         self.email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
     def scrape_contact_info(self, website_url: str) -> Dict[str, Optional[str]]:
         """
-        Scrape un site web pour extraire numero de reservation et email.
+        Scrape a website to extract reservation phone and email.
 
         Args:
-            website_url: URL du site web à scraper
+            website_url: URL of the website to scrape
 
         Returns:
-            Dict avec 'reservation_phone' et 'email'
+            Dict with 'reservation_phone' and 'email'
         """
         result = {
             'reservation_phone': None,
@@ -56,34 +56,34 @@ class ContactScraper:
             if not website_url.startswith(('http://', 'https://')):
                 website_url = 'https://' + website_url
         except Exception:
-            print("ERREUR: URL invalide")
+            print("ERROR: Invalid URL")
             return result
 
         try:
-            # Télécharger la page avec retry sur certaines erreurs
+            # Download page with retry on certain errors
             response = self._download_page_with_retry(website_url)
             if not response:
                 return result
 
-            # Vérifier le content-type
+            # Check content-type
             content_type = response.headers.get('content-type', '').lower()
             if 'text/html' not in content_type and 'application/xml' not in content_type:
-                print("ERREUR: contenu non HTML")
+                print("ERROR: Non-HTML content")
                 return result
 
-            # Vérifier la taille de la réponse
+            # Check response size
             if len(response.content) > 5_000_000:  # 5MB max
-                print("ERREUR: page trop volumineuse")
+                print("ERROR: Page too large")
                 return result
 
-            # Parser le HTML avec gestion d'erreurs
+            # Parse HTML with error handling
             try:
                 soup = BeautifulSoup(response.text, 'html.parser')
             except Exception as e:
-                print(f"ERREUR: parsing HTML - {str(e)[:50]}")
+                print(f"ERROR: HTML parsing - {str(e)[:50]}")
                 return result
 
-            # Extraire le numéro de réservation
+            # Extract reservation phone
             try:
                 raw_phone = self._extract_reservation_phone(soup, response.text)
                 if raw_phone:
@@ -91,46 +91,46 @@ class ContactScraper:
                     if cleaned_phone:
                         result['reservation_phone'] = cleaned_phone
             except Exception as e:
-                print(f"ERREUR extraction téléphone: {str(e)[:30]}")
+                print(f"ERROR: Phone extraction: {str(e)[:30]}")
 
-            # Extraire l'email
+            # Extract email
             try:
                 extracted_email = self._extract_email(soup, response.text)
                 if extracted_email:
                     result['email'] = extracted_email
             except Exception as e:
-                print(f"ERREUR extraction email: {str(e)[:30]}")
+                print(f"ERROR: Email extraction: {str(e)[:30]}")
 
-            print("OK" if result['reservation_phone'] or result['email'] else "Aucun contact trouvé")
+            print("OK" if result['reservation_phone'] or result['email'] else "No contact found")
 
         except requests.exceptions.Timeout:
-            print("ERREUR: timeout (>10s)")
+            print("ERROR: Timeout (>10s)")
         except requests.exceptions.ConnectionError:
-            print("ERREUR: connexion impossible")
+            print("ERROR: Connection failed")
         except requests.exceptions.HTTPError as e:
             status_code = getattr(e.response, 'status_code', 'Unknown')
             if status_code == 403:
-                print("ERREUR: accès interdit (403)")
+                print("ERROR: Access forbidden (403)")
             elif status_code == 404:
-                print("ERREUR: page non trouvée (404)")
+                print("ERROR: Page not found (404)")
             elif status_code == 503:
-                print("ERREUR: service indisponible (503)")
+                print("ERROR: Service unavailable (503)")
             else:
-                print(f"ERREUR: HTTP {status_code}")
+                print(f"ERROR: HTTP {status_code}")
         except requests.exceptions.TooManyRedirects:
-            print("ERREUR: trop de redirections")
+            print("ERROR: Too many redirects")
         except requests.exceptions.RequestException as e:
-            print(f"ERREUR: réseau - {str(e)[:50]}")
+            print(f"ERROR: Network - {str(e)[:50]}")
         except Exception as e:
-            print(f"ERREUR: inattendue - {str(e)[:50]}")
+            print(f"ERROR: Unexpected - {str(e)[:50]}")
 
-        # Sleep pour éviter de surcharger les serveurs
+        # Sleep to avoid overloading servers
         time.sleep(2)
 
         return result
 
     def _download_page_with_retry(self, url: str, max_retries: int = 2):
-        """Télécharge une page avec retry sur certaines erreurs."""
+        """Download a page with retry on certain errors."""
         for attempt in range(max_retries + 1):
             try:
                 response = requests.get(
@@ -138,12 +138,12 @@ class ContactScraper:
                     headers=self.headers,
                     timeout=self.timeout,
                     allow_redirects=True,
-                    verify=True  # Vérifier les certificats SSL
+                    verify=True  # Verify SSL certificates
                 )
 
                 # Check for specific retry-able status codes
                 if response.status_code == 503 and attempt < max_retries:
-                    print(f"  Service indisponible, retry {attempt + 1}/{max_retries}...", end=" ")
+                    print(f"  Service unavailable, retry {attempt + 1}/{max_retries}...", end=" ")
                     time.sleep(3)  # Wait before retry
                     continue
                 elif response.status_code == 429 and attempt < max_retries:  # Rate limit
@@ -163,7 +163,7 @@ class ContactScraper:
                     raise e
             except requests.exceptions.ConnectionError as e:
                 if attempt < max_retries:
-                    print(f"  Connexion échouée, retry {attempt + 1}/{max_retries}...", end=" ")
+                    print(f"  Connection failed, retry {attempt + 1}/{max_retries}...", end=" ")
                     time.sleep(2)
                     continue
                 else:
@@ -172,9 +172,9 @@ class ContactScraper:
         return None
 
     def _extract_reservation_phone(self, soup: BeautifulSoup, html_text: str) -> Optional[str]:
-        """Extraire le numéro de réservation du HTML."""
+        """Extract reservation phone number from HTML."""
 
-        # 1. Chercher les liens tel: en priorité
+        # 1. Search for tel: links as priority
         tel_links = soup.find_all('a', href=re.compile(r'^tel:'))
         if tel_links:
             for link in tel_links:
@@ -183,12 +183,12 @@ class ContactScraper:
                 if cleaned_phone:
                     return cleaned_phone
 
-        # 2. Chercher les numéros près des mots-clés de réservation
+        # 2. Search for phone numbers near reservation keywords
         reservation_phone = self._find_phone_near_keywords(html_text)
         if reservation_phone:
             return reservation_phone
 
-        # 3. Fallback: prendre le premier numéro français trouvé
+        # 3. Fallback: take the first French phone number found
         phones = self.phone_extractor.extract_phones(html_text)
         if phones:
             return phones[0]
@@ -196,14 +196,14 @@ class ContactScraper:
         return None
 
     def _find_phone_near_keywords(self, text: str) -> Optional[str]:
-        """Trouver un numéro de téléphone près des mots-clés de réservation."""
+        """Find a phone number near reservation keywords."""
 
-        # Nettoyer le texte
+        # Clean the text
         text_lower = text.lower()
 
-        # Pour chaque mot-clé de réservation
+        # For each reservation keyword
         for keyword in self.reservation_keywords:
-            # Trouver toutes les positions du mot-clé
+            # Find all positions of the keyword
             keyword_positions = []
             start = 0
             while True:
@@ -213,66 +213,65 @@ class ContactScraper:
                 keyword_positions.append(pos)
                 start = pos + 1
 
-            # Pour chaque position de mot-clé
+            # For each keyword position
             for pos in keyword_positions:
-                # Extraire un contexte autour du mot-clé (200 caractères avant/après)
+                # Extract context around the keyword (200 characters before/after)
                 start_context = max(0, pos - 200)
                 end_context = min(len(text), pos + 200)
                 context = text[start_context:end_context]
 
-                # Chercher des numéros dans ce contexte
+                # Search for phone numbers in this context
                 phones = self.phone_extractor.extract_phones(context)
                 if phones:
-                    return phones[0]  # Prendre le premier numéro trouvé
+                    return phones[0]  # Take the first phone number found
 
         return None
 
     def _extract_email(self, soup: BeautifulSoup, html_text: str) -> Optional[str]:
-        """Extraire l'adresse email du HTML."""
+        """Extract email address from HTML."""
 
-        # 1. Chercher les liens mailto: en priorité
+        # 1. Search for mailto: links as priority
         mailto_links = soup.find_all('a', href=re.compile(r'^mailto:'))
         if mailto_links:
             email = mailto_links[0]['href'].replace('mailto:', '').strip()
-            # Nettoyer l'email (enlever les paramètres comme ?subject=...)
+            # Clean email (remove parameters like ?subject=...)
             email = email.split('?')[0]
             if self._is_valid_email(email):
                 return email
 
-        # 2. Chercher avec regex dans le texte
+        # 2. Search with regex in text
         emails = re.findall(self.email_pattern, html_text)
 
-        # Filtrer les emails valides et exclure les emails génériques
+        # Filter valid emails and exclude generic ones
         valid_emails = []
         excluded_patterns = [
             'example.com', 'test.com', 'lorem', 'ipsum',
             'noreply', 'no-reply', 'admin@', 'webmaster@',
-            'utilisateur@domaine.com', 'user@domain.com',
-            'contact@exemple.com', 'email@exemple.fr'
+            'user@domain.com', 'email@example.com'
         ]
 
         for email in emails:
             email = email.lower()
             if self._is_valid_email(email):
-                # Exclure les emails génériques
+                # Exclude generic emails
                 if not any(pattern in email for pattern in excluded_patterns):
                     valid_emails.append(email)
 
         return valid_emails[0] if valid_emails else None
 
     def _is_valid_email(self, email: str) -> bool:
-        """Vérifier si l'email est valide."""
+        """Check if email is valid."""
         if not email or len(email) > 254:
             return False
 
         return re.match(self.email_pattern, email) is not None
 
 
-# Pour les tests
+# For testing
 if __name__ == "__main__":
     scraper = ContactScraper()
 
-    # Test avec un site exemple
+    # Test with an example site
     test_url = "https://example.com"
     result = scraper.scrape_contact_info(test_url)
-    print(f"Résultat: {result}")
+    print(f"Result: {result}")

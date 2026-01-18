@@ -1,262 +1,264 @@
-# 🏨 Outil de Prospection Hotels & Restaurants
+# Hotel & Restaurant Prospector
 
-Outil CLI Python pour prospecter des hotels et restaurants via l'API Google Maps, avec extraction automatique des numéros de réservation depuis les sites web.
+![Ralph Wiggum Coding](ralph_coding_for_me.webp)
 
-## ✨ Fonctionnalités
+CLI tool for prospecting hotels and restaurants via Google Maps API with automated web scraping for reservation phone numbers and emails.
 
-- 🔍 **Recherche Google Maps** : Trouve des établissements par ville via l'API Google Places
-- 🌐 **Scraping intelligent** : Visite les sites web pour extraire numéros de réservation et emails
-- 📊 **Export multi-format** : CSV et JSON avec données enrichies
-- ⚡ **Performance** : Gestion des timeouts, rate limiting et retry automatique
-- 🛡️ **Robuste** : Gestion d'erreurs complète et validation des données
+## Features
 
-## 🚀 Installation
+- **Google Maps Search**: Find establishments by city via Google Places API
+- **Smart Scraping**: Visit websites to extract reservation phone numbers and emails
+- **Multi-format Export**: CSV and JSON with enriched data
+- **Performance**: Timeout handling, rate limiting, and automatic retry
+- **Robust**: Complete error handling and data validation
 
-### Prérequis
-- Python 3.10 ou supérieur
-- Clé API Google Maps avec accès aux Places API
+## Installation
 
-### Installation des dépendances
+### Prerequisites
+- Python 3.10 or higher
+- Google Maps API key with Places API access
+
+### Install dependencies
 ```bash
 pip install requests beautifulsoup4 python-dotenv
 ```
 
-### Configuration API Google
-1. Créer un fichier `.env` dans le dossier du projet
-2. Ajouter votre clé API Google Maps :
+### Google API Configuration
+1. Create a `.env` file in the project folder
+2. Add your Google Maps API key:
 ```
-GOOGLE_MAPS_API_KEY=votre_cle_api_ici
+GOOGLE_MAPS_API_KEY=your_api_key_here
 ```
 
-**Obtenir une clé API Google Maps :**
-1. Aller sur [Google Cloud Console](https://console.cloud.google.com/)
-2. Créer ou sélectionner un projet
-3. Activer les APIs "Places API (New)"
-4. Créer une clé API et la copier dans le fichier `.env`
+**Getting a Google Maps API key:**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create or select a project
+3. Enable "Places API (New)"
+4. Create an API key and copy it to the `.env` file
 
-## 📋 Utilisation
+## Usage
 
-### Commande de base
+### Basic command
 ```bash
 python src/prospector.py --city "Paris" --type restaurant
 ```
 
-### Options disponibles
+### Available options
 
-| Option | Description | Défaut |
-|--------|-------------|--------|
-| `--city` | Ville à prospecter (requis) | - |
-| `--type` | Type d'établissement (`hotel`, `restaurant`, `all`) | `all` |
-| `--limit` | Nombre maximum de résultats | `20` |
-| `--no-scrape` | Désactiver le scraping (plus rapide) | `False` |
-| `--output` | Nom de fichier de sortie sans extension | `prospection` |
-| `--format` | Format d'export (`csv`, `json`, `both`) | `csv` |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--city` | City to prospect (required) | - |
+| `--type` | Establishment type (`hotel`, `restaurant`, `all`) | `all` |
+| `--limit` | Maximum number of results | `20` |
+| `--no-scrape` | Disable scraping (faster) | `False` |
+| `--output` | Output filename without extension | `prospection` |
+| `--format` | Export format (`csv`, `json`, `both`) | `csv` |
 
-### Exemples d'utilisation
+### Usage examples
 
 ```bash
-# Recherche basique - restaurants à Paris
+# Basic search - restaurants in Paris
 python src/prospector.py --city "Paris" --type restaurant
 
-# Hotels à Lyon avec limite
+# Hotels in Lyon with limit
 python src/prospector.py --city "Lyon" --type hotel --limit 10
 
-# Tous types d'établissements à Nice, sans scraping
+# All establishment types in Nice, without scraping
 python src/prospector.py --city "Nice" --type all --no-scrape
 
-# Export JSON uniquement
+# JSON export only
 python src/prospector.py --city "Marseille" --format json
 
-# Export complet avec scraping
+# Complete export with scraping
 python src/prospector.py --city "Bordeaux" --format both --limit 30
 ```
 
-## 📊 Données extraites
+## Extracted Data
 
-### Sources de données
+### Data sources
 
-| Champ | Source | Description |
+| Field | Source | Description |
 |-------|--------|-------------|
-| `name` | Google Places | Nom de l'établissement |
-| `address` | Google Places | Adresse complète |
-| `google_phone` | Google Place Details | Numéro Google officiel |
-| `website` | Google Place Details | Site web officiel |
-| `**reservation_phone**` | **Scraping site web** | **Numéro de réservation** |
-| `email` | Scraping site web | Adresse email de contact |
-| `rating` | Google Places | Note (sur 5) |
-| `reviews` | Google Places | Nombre d'avis |
-| `type` | Détection automatique | hotel/restaurant |
+| `name` | Google Places | Establishment name |
+| `address` | Google Places | Full address |
+| `google_phone` | Google Place Details | Official Google phone number |
+| `website` | Google Place Details | Official website |
+| `**reservation_phone**` | **Website scraping** | **Reservation phone number** |
+| `email` | Website scraping | Contact email address |
+| `rating` | Google Places | Rating (out of 5) |
+| `reviews` | Google Places | Number of reviews |
+| `type` | Auto-detection | hotel/restaurant |
 
-### Exemple de sortie CSV
+### CSV output example
 ```csv
 name,address,google_phone,reservation_phone,email,website,rating,reviews,type
 Le Petit Bistro,"12 rue de la Paix, 75001 Paris",+33 1 23 45 67 89,+33 1 98 76 54 32,contact@petitbistro.fr,https://petitbistro.fr,4.5,120,restaurant
 Hotel Royal,"5 avenue des Champs, 75008 Paris",+33 4 56 78 90 12,+33 4 11 22 33 44,,https://hotelroyal.fr,4.2,89,hotel
 ```
 
-## 🕷️ Extraction de numéros de réservation
+## Reservation Phone Extraction
 
-Le scraper visite automatiquement les sites web et utilise une logique intelligente :
+The scraper automatically visits websites and uses smart logic:
 
-### 1. Détection par liens téléphone
-Recherche les liens `<a href="tel:+33123456789">` en priorité.
+### 1. Phone link detection
+Searches for `<a href="tel:+33123456789">` links as priority.
 
-### 2. Analyse contextuelle
-Cherche les numéros près des mots-clés :
-- **Français** : "réservation", "réserver", "contact", "appelez"
-- **Anglais** : "booking", "book now", "book a table", "call us"
+### 2. Contextual analysis
+Looks for phone numbers near keywords:
+- **French**: "reservation", "reserver", "contact", "appelez"
+- **English**: "booking", "book now", "book a table", "call us"
 
-### 3. Fallback intelligent
-Si aucun contexte de réservation, prend le premier numéro français valide.
+### 3. Smart fallback
+If no reservation context found, takes the first valid French phone number.
 
-### Formats supportés
+### Supported formats
 - `+33 X XX XX XX XX`
 - `0X XX XX XX XX`
 - `0X.XX.XX.XX.XX`
 - `0X-XX-XX-XX-XX`
 - `0123456789`
 
-## ⚡ Performance et limites
+## Performance and Limits
 
 ### Rate limiting
-- **Google API** : 1 seconde entre requêtes
-- **Scraping** : 2 secondes entre sites web
-- **Timeout** : 10 secondes par site web
+- **Google API**: 1 second between requests
+- **Scraping**: 2 seconds between websites
+- **Timeout**: 10 seconds per website
 
-### Gestion d'erreurs
-- ✅ Retry automatique sur erreurs temporaires (503, timeout)
-- ✅ Continuation en cas d'échec d'un site
-- ✅ Validation SSL et filtrage de contenu
-- ✅ Protection contre sites trop volumineux (>5MB)
+### Error handling
+- Automatic retry on temporary errors (503, timeout)
+- Continues on individual site failure
+- SSL validation and content filtering
+- Protection against oversized pages (>5MB)
 
 ### Limitations
-- Maximum 20 résultats par requête Google Places
-- Scraping respectueux (User-Agent réaliste)
-- Pas de scraping de plus de 60 sites/minute
+- Maximum 20 results per Google Places request
+- Respectful scraping (realistic User-Agent)
+- No more than 60 sites scraped per minute
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 src/
-├── prospector.py       # CLI principale avec argparse
-├── google_places.py    # Client API Google Places v1
-├── contact_scraper.py  # Scraping site web + extraction contacts
-├── phone_extractor.py  # Détection et formatage numéros FR
-└── exporter.py         # Export CSV/JSON
+├── prospector.py       # Main CLI with argparse
+├── google_places.py    # Google Places API v1 client
+├── contact_scraper.py  # Website scraping + contact extraction
+├── phone_extractor.py  # French phone number detection and formatting
+└── exporter.py         # CSV/JSON export
 ```
 
-### Modules principaux
+### Main modules
 
 #### `GooglePlacesClient`
-- Text Search API pour trouver établissements par ville
-- Place Details API pour récupérer téléphone et site web
-- Gestion d'erreurs API et rate limiting
+- Text Search API to find establishments by city
+- Place Details API to get phone and website
+- API error handling and rate limiting
 
 #### `ContactScraper`
-- Téléchargement pages web avec retry
-- Extraction numéros de réservation par contexte
-- Extraction emails avec filtrage anti-spam
+- Web page download with retry
+- Reservation phone extraction by context
+- Email extraction with spam filtering
 
 #### `PhoneExtractor`
-- Regex optimisée pour numéros français
-- Nettoyage et formatage automatique
-- Détection contextuelle des numéros de réservation
+- Optimized regex for French phone numbers
+- Automatic cleaning and formatting
+- Contextual detection of reservation numbers
 
 #### `Exporter`
-- Export CSV avec en-têtes standardisés
-- Export JSON avec métadonnées
-- Validation des données avant export
+- CSV export with standardized headers
+- JSON export with metadata
+- Data validation before export
 
-## 🐛 Dépannage
+## Troubleshooting
 
-### Erreurs courantes
+### Common errors
 
-**❌ "API key invalide ou manquante"**
+**"Invalid or missing API key"**
 ```bash
-# Vérifier le fichier .env
+# Check the .env file
 cat .env
-# Doit contenir : GOOGLE_MAPS_API_KEY=votre_cle
+# Should contain: GOOGLE_MAPS_API_KEY=your_key
 ```
 
-**❌ "Aucun établissement trouvé"**
-- Vérifier l'orthographe de la ville
-- Essayer avec une ville plus connue (Paris, Lyon, Marseille...)
-- Changer le type d'établissement
+**"No establishments found"**
+- Check the city spelling
+- Try a more well-known city (Paris, Lyon, Marseille...)
+- Change the establishment type
 
-**❌ "Timeout lors du scraping"**
-- Normal pour certains sites lents
-- Utiliser `--no-scrape` pour un test rapide
-- Le scraping continue avec les autres sites
+**"Timeout during scraping"**
+- Normal for some slow sites
+- Use `--no-scrape` for a quick test
+- Scraping continues with other sites
 
-**❌ "Quota API dépassé"**
-- Vérifier les quotas dans Google Cloud Console
-- Attendre la remise à zéro du quota (24h)
-- Optimiser avec `--limit` plus faible
+**"API quota exceeded"**
+- Check quotas in Google Cloud Console
+- Wait for quota reset (24h)
+- Optimize with lower `--limit`
 
-### Messages d'état
+### Status messages
 
-| Message | Signification |
-|---------|---------------|
-| `✅ OK` | Scraping réussi avec contacts trouvés |
-| `⚠️ Aucun contact trouvé` | Site accessible mais pas de numéro |
-| `❌ ERREUR: timeout` | Site trop lent (>10s) |
-| `❌ ERREUR: 403` | Site bloque les robots |
-| `❌ ERREUR: 404` | Page non trouvée |
+| Message | Meaning |
+|---------|---------|
+| `OK` | Scraping successful with contacts found |
+| `No contact found` | Site accessible but no phone number |
+| `ERROR: timeout` | Site too slow (>10s) |
+| `ERROR: 403` | Site blocks bots |
+| `ERROR: 404` | Page not found |
 
-## 🧪 Tests
+## Testing
 
-### Test rapide
+### Quick test
 ```bash
-# Test de l'API Google
+# Test Google API
 python src/google_places.py
 
-# Test du scraper
+# Test scraper
 python src/contact_scraper.py
 
-# Test de l'extracteur de numéros
+# Test phone extractor
 python src/phone_extractor.py
 
-# Test de l'exporteur
+# Test exporter
 python src/exporter.py
 ```
 
-### Test complet
+### Full test
 ```bash
-# Test avec 5 restaurants parisiens (rapide)
+# Test with 5 Parisian restaurants (quick)
 python src/prospector.py --city "Paris" --type restaurant --limit 5
 ```
 
-## 📝 Exemples avancés
+## Advanced Examples
 
-### Prospection hôtels de luxe
+### Luxury hotel prospecting
 ```bash
 python src/prospector.py --city "Cannes" --type hotel --limit 15 --format both
 ```
 
-### Audit restaurants sans scraping (rapide)
+### Restaurant audit without scraping (fast)
 ```bash
 python src/prospector.py --city "Toulouse" --type restaurant --no-scrape --limit 50
 ```
 
-### Export personnalisé
+### Custom export
 ```bash
 python src/prospector.py --city "Strasbourg" --output "hotels_strasbourg" --format json
 ```
 
-## 🔒 Respect des bonnes pratiques
+## Best Practices
 
-- ✅ Rate limiting respectueux
-- ✅ User-Agent réaliste
-- ✅ Gestion SSL appropriée
-- ✅ Timeouts configurés (10s)
-- ✅ Pas de surcharge des serveurs
-- ✅ Données pseudonymisées dans les logs
+- Respectful rate limiting
+- Realistic User-Agent
+- Proper SSL handling
+- Configured timeouts (10s)
+- No server overload
+- Pseudonymized data in logs
 
-## 📄 Licence
+## License
 
-Ce projet est destiné à un usage professionnel de prospection commerciale.
-Respecter les CGU des sites web scrapés et les réglementations RGPD.
+This project is intended for professional commercial prospecting use.
+Respect website terms of service and GDPR regulations.
 
 ---
 
-**Développé par Ralph Wiggum** 🤖 - Outil de prospection automatisé pour professionnels.
+**Developed with Claude Code** - Automated prospecting tool for professionals.

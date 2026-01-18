@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Exporter - Export des données de prospection en CSV et JSON
+Exporter - Export prospecting data to CSV and JSON
 """
 
 import csv
@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 class Exporter:
-    """Classe pour exporter les données de prospection en CSV et JSON"""
+    """Class to export prospecting data to CSV and JSON"""
 
     def __init__(self):
         self.csv_headers = [
@@ -27,14 +27,14 @@ class Exporter:
 
     def export_csv(self, data: List[Dict[str, Any]], filename: str) -> bool:
         """
-        Exporte les données au format CSV
+        Export data to CSV format
 
         Args:
-            data: Liste des établissements avec leurs infos
-            filename: Nom du fichier de sortie (avec .csv)
+            data: List of establishments with their info
+            filename: Output filename (with .csv)
 
         Returns:
-            bool: True si l'export a réussi
+            bool: True if export succeeded
         """
         try:
             filepath = Path(filename)
@@ -45,12 +45,12 @@ class Exporter:
                 writer.writeheader()
 
                 for item in data:
-                    # Préparation des données avec valeurs par défaut
+                    # Prepare data with default values
                     row = {}
                     for header in self.csv_headers:
                         value = item.get(header, '')
 
-                        # Conversion des valeurs spéciales
+                        # Convert special values
                         if header == 'rating' and value:
                             row[header] = f"{value:.1f}"
                         elif header == 'reviews' and value:
@@ -60,33 +60,33 @@ class Exporter:
 
                     writer.writerow(row)
 
-            print(f"✅ Export CSV réussi: {filename} ({len(data)} entrées)")
+            print(f"OK: CSV export successful: {filename} ({len(data)} entries)")
             return True
 
         except Exception as e:
-            print(f"❌ Erreur export CSV: {e}")
+            print(f"ERROR: CSV export failed: {e}")
             return False
 
     def export_json(self, data: List[Dict[str, Any]], filename: str) -> bool:
         """
-        Exporte les données au format JSON
+        Export data to JSON format
 
         Args:
-            data: Liste des établissements avec leurs infos
-            filename: Nom du fichier de sortie (avec .json)
+            data: List of establishments with their info
+            filename: Output filename (with .json)
 
         Returns:
-            bool: True si l'export a réussi
+            bool: True if export succeeded
         """
         try:
             filepath = Path(filename)
             filepath.parent.mkdir(parents=True, exist_ok=True)
 
-            # Préparation des données JSON avec métadonnées
+            # Prepare JSON data with metadata
             json_data = {
                 "metadata": {
                     "total_count": len(data),
-                    "export_timestamp": None,  # Sera ajouté par le CLI
+                    "export_timestamp": None,  # Will be added by CLI
                     "export_type": "prospection_hotels_restaurants"
                 },
                 "establishments": data
@@ -95,23 +95,23 @@ class Exporter:
             with open(filepath, 'w', encoding='utf-8') as jsonfile:
                 json.dump(json_data, jsonfile, ensure_ascii=False, indent=2)
 
-            print(f"✅ Export JSON réussi: {filename} ({len(data)} entrées)")
+            print(f"OK: JSON export successful: {filename} ({len(data)} entries)")
             return True
 
         except Exception as e:
-            print(f"❌ Erreur export JSON: {e}")
+            print(f"ERROR: JSON export failed: {e}")
             return False
 
     def export_both(self, data: List[Dict[str, Any]], base_filename: str) -> Dict[str, bool]:
         """
-        Exporte les données en CSV et JSON
+        Export data to both CSV and JSON
 
         Args:
-            data: Liste des établissements avec leurs infos
-            base_filename: Nom de base sans extension
+            data: List of establishments with their info
+            base_filename: Base filename without extension
 
         Returns:
-            dict: Status des exports {"csv": bool, "json": bool}
+            dict: Export status {"csv": bool, "json": bool}
         """
         csv_file = f"{base_filename}.csv"
         json_file = f"{base_filename}.json"
@@ -125,18 +125,18 @@ class Exporter:
 
     def validate_data(self, data: List[Dict[str, Any]]) -> List[str]:
         """
-        Valide les données avant export
+        Validate data before export
 
         Args:
-            data: Liste des établissements
+            data: List of establishments
 
         Returns:
-            list: Liste des erreurs de validation (vide si OK)
+            list: List of validation errors (empty if OK)
         """
         errors = []
 
         if not data:
-            errors.append("Aucune donnée à exporter")
+            errors.append("No data to export")
             return errors
 
         required_fields = ['name', 'place_id']
@@ -144,15 +144,15 @@ class Exporter:
         for i, item in enumerate(data):
             for field in required_fields:
                 if not item.get(field):
-                    errors.append(f"Entrée {i+1}: champ '{field}' manquant")
+                    errors.append(f"Entry {i+1}: missing field '{field}'")
 
         return errors
 
 
 def demo_export():
-    """Fonction de test pour l'exporteur"""
+    """Test function for the exporter"""
 
-    # Données de test
+    # Test data
     test_data = [
         {
             'name': 'Le Petit Bistro',
@@ -182,29 +182,29 @@ def demo_export():
 
     exporter = Exporter()
 
-    print("🧪 Test de l'exporteur...")
+    print("Testing exporter...")
 
-    # Validation des données
+    # Validate data
     errors = exporter.validate_data(test_data)
     if errors:
-        print("❌ Erreurs de validation:")
+        print("ERROR: Validation errors:")
         for error in errors:
             print(f"  - {error}")
         return False
 
-    # Test export CSV
+    # Test CSV export
     csv_success = exporter.export_csv(test_data, "test_export.csv")
 
-    # Test export JSON
+    # Test JSON export
     json_success = exporter.export_json(test_data, "test_export.json")
 
-    # Test export both
+    # Test both export
     both_results = exporter.export_both(test_data, "test_combined")
 
-    print(f"📊 Résultats:")
-    print(f"  CSV: {'✅' if csv_success else '❌'}")
-    print(f"  JSON: {'✅' if json_success else '❌'}")
-    print(f"  Both: CSV={'✅' if both_results['csv'] else '❌'}, JSON={'✅' if both_results['json'] else '❌'}")
+    print(f"Results:")
+    print(f"  CSV: {'OK' if csv_success else 'FAILED'}")
+    print(f"  JSON: {'OK' if json_success else 'FAILED'}")
+    print(f"  Both: CSV={'OK' if both_results['csv'] else 'FAILED'}, JSON={'OK' if both_results['json'] else 'FAILED'}")
 
     return csv_success and json_success and all(both_results.values())
 

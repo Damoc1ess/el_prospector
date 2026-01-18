@@ -62,20 +62,20 @@ class GooglePlacesClient:
 
             # Handle HTTP errors with detailed messages
             if response.status_code == 401:
-                raise requests.HTTPError("API key invalide ou manquante")
+                raise requests.HTTPError("Invalid or missing API key")
             elif response.status_code == 403:
-                raise requests.HTTPError("API key sans permissions ou quota dépassé")
+                raise requests.HTTPError("API key without permissions or quota exceeded")
             elif response.status_code == 400:
-                raise requests.HTTPError(f"Requête invalide: {response.text}")
+                raise requests.HTTPError(f"Invalid request: {response.text}")
             elif response.status_code >= 500:
-                raise requests.HTTPError(f"Erreur serveur Google (status {response.status_code})")
+                raise requests.HTTPError(f"Google server error (status {response.status_code})")
 
             response.raise_for_status()
             data = response.json()
 
             places = data.get('places', [])
             if not places:
-                print(f"⚠️  Aucun établissement {place_type} trouvé à {city}")
+                print(f"WARNING: No {place_type} establishments found in {city}")
 
             # Transform to compatible format
             transformed_places = []
@@ -90,12 +90,12 @@ class GooglePlacesClient:
                     }
                     # Validate essential fields
                     if not transformed_place['place_id']:
-                        print(f"⚠️  Place sans ID ignoré: {transformed_place['name']}")
+                        print(f"WARNING: Place without ID ignored: {transformed_place['name']}")
                         continue
 
                     transformed_places.append(transformed_place)
                 except Exception as e:
-                    print(f"⚠️  Erreur parsing place: {e}")
+                    print(f"WARNING: Error parsing place: {e}")
                     continue
 
             # Sleep to respect API rate limits
@@ -104,18 +104,18 @@ class GooglePlacesClient:
             return transformed_places
 
         except requests.Timeout:
-            raise requests.RequestException(f"Timeout lors de la recherche à {city} (>10s)")
+            raise requests.RequestException(f"Timeout during search in {city} (>10s)")
         except requests.ConnectionError:
-            raise requests.RequestException("Erreur de connexion à Google Places API")
+            raise requests.RequestException("Connection error to Google Places API")
         except requests.HTTPError as e:
-            raise requests.RequestException(f"Erreur HTTP Google Places: {e}")
+            raise requests.RequestException(f"Google Places HTTP error: {e}")
         except ValueError as e:
             if "JSON" in str(e):
-                raise requests.RequestException("Réponse Google Places invalide (JSON malformé)")
+                raise requests.RequestException("Invalid Google Places response (malformed JSON)")
             else:
                 raise e
         except Exception as e:
-            raise requests.RequestException(f"Erreur inattendue Google Places: {e}")
+            raise requests.RequestException(f"Unexpected Google Places error: {e}")
 
     def get_place_details(self, place_id: str) -> Optional[Dict]:
         """
@@ -143,23 +143,23 @@ class GooglePlacesClient:
 
             # Handle HTTP errors with detailed messages
             if response.status_code == 401:
-                raise requests.HTTPError("API key invalide ou manquante")
+                raise requests.HTTPError("Invalid or missing API key")
             elif response.status_code == 403:
-                raise requests.HTTPError("API key sans permissions ou quota dépassé")
+                raise requests.HTTPError("API key without permissions or quota exceeded")
             elif response.status_code == 404:
-                print(f"⚠️  Place ID {place_id} introuvable")
+                print(f"WARNING: Place ID {place_id} not found")
                 return None
             elif response.status_code == 400:
-                raise requests.HTTPError(f"Place ID invalide: {place_id}")
+                raise requests.HTTPError(f"Invalid Place ID: {place_id}")
             elif response.status_code >= 500:
-                raise requests.HTTPError(f"Erreur serveur Google (status {response.status_code})")
+                raise requests.HTTPError(f"Google server error (status {response.status_code})")
 
             response.raise_for_status()
             data = response.json()
 
             # Validate response structure
             if not isinstance(data, dict):
-                raise ValueError("Réponse Google Places invalide")
+                raise ValueError("Invalid Google Places response")
 
             # Transform to compatible format with error handling
             try:
@@ -178,26 +178,26 @@ class GooglePlacesClient:
                 return result
 
             except Exception as e:
-                print(f"⚠️  Erreur parsing détails place {place_id}: {e}")
+                print(f"WARNING: Error parsing place details {place_id}: {e}")
                 return None
 
         except requests.Timeout:
-            print(f"⚠️  Timeout détails place {place_id} (>10s)")
+            print(f"WARNING: Timeout for place details {place_id} (>10s)")
             return None
         except requests.ConnectionError:
-            print(f"⚠️  Connexion échouée pour place {place_id}")
+            print(f"WARNING: Connection failed for place {place_id}")
             return None
         except requests.HTTPError as e:
-            print(f"⚠️  Erreur HTTP place {place_id}: {e}")
+            print(f"WARNING: HTTP error for place {place_id}: {e}")
             return None
         except ValueError as e:
             if "JSON" in str(e):
-                print(f"⚠️  Réponse invalide pour place {place_id}")
+                print(f"WARNING: Invalid response for place {place_id}")
             else:
                 raise e
             return None
         except Exception as e:
-            print(f"⚠️  Erreur inattendue place {place_id}: {e}")
+            print(f"WARNING: Unexpected error for place {place_id}: {e}")
             return None
 
     def test_connection(self) -> bool:
@@ -212,10 +212,10 @@ class GooglePlacesClient:
             print("Testing Text Search API...")
             test_places = self.search_places("Paris", "restaurant", 2)
             if not test_places:
-                print("✗ Google Places Text Search returned no results")
+                print("FAILED: Google Places Text Search returned no results")
                 return False
 
-            print(f"✓ Text Search successful - Found {len(test_places)} places")
+            print(f"OK: Text Search successful - Found {len(test_places)} places")
             print(f"  Example: {test_places[0]['name']} - {test_places[0]['formatted_address']}")
 
             # Test 2: Place Details
@@ -223,10 +223,10 @@ class GooglePlacesClient:
             place_id = test_places[0]['place_id']
             details = self.get_place_details(place_id)
             if not details:
-                print("✗ Place Details API failed")
+                print("FAILED: Place Details API failed")
                 return False
 
-            print("✓ Place Details successful")
+            print("OK: Place Details successful")
             print(f"  Name: {details.get('name')}")
             print(f"  Phone: {details.get('formatted_phone_number', 'N/A')}")
             print(f"  Website: {details.get('website', 'N/A')}")
@@ -235,7 +235,7 @@ class GooglePlacesClient:
             return True
 
         except Exception as e:
-            print(f"✗ Google Places API connection failed: {e}")
+            print(f"FAILED: Google Places API connection failed: {e}")
             return False
 
 

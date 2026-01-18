@@ -3,6 +3,14 @@
 
 # Output
 output/
+*.csv
+*.json
+
+# Ralph Wiggum methodology (private)
+PROMPT.md
+TODO.md
+loop.sh
+guide/
 
 # Python
 __pycache__/

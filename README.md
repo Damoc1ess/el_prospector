@@ -261,4 +261,30 @@ Respect website terms of service and GDPR regulations.
 
 ---
 
-**Developed with Claude Code** - Automated prospecting tool for professionals.
+## Built with Ralph Wiggum
+
+This project was **100% autonomously coded** using the **Ralph Wiggum** methodology - an agentic loop technique for Claude Code CLI.
+
+| Metric | Value |
+|--------|-------|
+| **AI Model** | Claude Opus 4.5 (`claude-opus-4-5-20251101`) |
+| **Technique** | Ralph Wiggum autonomous loop |
+| **Iterations** | 11 tours |
+| **Duration** | 26 minutes |
+| **Commits** | 15 |
+
+### What is Ralph Wiggum?
+
+Ralph Wiggum is a methodology for running Claude Code in autonomous mode with:
+- **PROMPT.md** - Instructions and specifications
+- **TODO.md** - State persistence and progress tracking
+- **loop.sh** - Orchestration script with circuit breakers
+- **HARD STOP** - Automatic termination when complete
+
+The AI reads the specifications, plans the work, implements features, tests them, and commits - all autonomously without human intervention.
+
+*"I'm helping!"* - Ralph Wiggum
+
+---
+
+**Developed with [Claude Code](https://claude.ai/code)** - Automated prospecting tool for professionals.
